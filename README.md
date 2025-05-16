@@ -1,5 +1,4 @@
 # 🐋 mcav-docker
-
 Contains Dockerfiles and a run script.
 
 Docker is an alternative if you don't have a Ubuntu 22 VM.
@@ -16,18 +15,6 @@ Main cmd:
 docker run -it --name ros2-vehicle-interface-container ros2-vehicle-interface
 ```
 Feel free to change the `--name`
-
-- Note: To run with your ssh keys for github, run:
-    1. `eval "$(ssh-agent -s)"`
-    2. `ssh-add ~/.ssh/<github_ssh_key>`
-    3. ```bash
-        docker run -it \
-          --name ros2-vehicle-interface-container \
-          -v $SSH_AUTH_SOCK:/ssh-agent \
-          -e SSH_AUTH_SOCK=/ssh-agent \
-          -v ~/.ssh/known_hosts:/root/.ssh/known_hosts:ro \
-          ros2-vehicle-interface bash
-        ```
 
 Options:
 - Remove container after running: `--rm`

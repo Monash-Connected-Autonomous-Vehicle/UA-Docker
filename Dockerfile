@@ -15,7 +15,6 @@ RUN apt-get update && apt-get install -y \
   iputils-ping \
   tmux \
   neovim \
-  openssh-client \
   && rm -rf /var/lib/apt/lists/* \
   && apt-get clean
 
@@ -57,11 +56,6 @@ RUN rosdep init && rosdep update \
 
 # Change ownership to non-root user
 RUN chown -R $USERNAME:$USERNAME /home/$USERNAME
-
-# Add ssh keys - before running the container make sure to run (in the same shell):
-# 1. `eval "$(ssh-agent -s)"`
-# 2. `ssh-add ~/.ssh/<ssh_private_key>`
-RUN mkdir -p /root/.ssh && chmod 700 /root/.ssh
 
 # Switch to non-root user
 USER $USERNAME
