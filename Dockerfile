@@ -41,12 +41,6 @@ ENV WORKSPACE_DIR=/home/$USERNAME/ros2_ws
 WORKDIR $WORKSPACE_DIR
 RUN mkdir -p src
 
-# Clone external repositories via build args
-ARG SD_VEHICLE_INTERFACE_REPO=https://github.com/Monash-Connected-Autonomous-Vehicle/SD-VehicleInterface.git
-ARG AUTOWARE_MSGS_REPO=https://github.com/autowarefoundation/autoware_msgs.git
-WORKDIR $WORKSPACE_DIR/src
-RUN git clone $SD_VEHICLE_INTERFACE_REPO \
-  && git clone $AUTOWARE_MSGS_REPO
 
 # Initialize and run rosdep
 WORKDIR $WORKSPACE_DIR
