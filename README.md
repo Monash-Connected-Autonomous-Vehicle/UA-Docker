@@ -2,7 +2,7 @@
 
 Docker enables running applications across different Operation Systems. At MCAV, it is a lightweight alterative to a full-scale Ubuntu 22 Virtual Machine.
 
-**The entire README document is useful, so please read it all before starting to work with docker**
+**Please read it the entire README before starting to work with docker**
 
 **Avoid comands to publish data, e.g. `docker push/commit ..`**
 
@@ -21,7 +21,7 @@ docker run -d --name ros2-vehicle-interface -e ENABLE_VNC=true \
 ## Accessing Container
 2 options:
 - Attach (i.e. open terminal connected) to docker via terminal as needed: `docker exec -it ros2-vehicle-interface bash`
-- Or, go to http://localhost:6080/ and use password=`password` to login 
+- Or, go to http://localhost:6080/ and use password=`password` to login. This opens an blank background usually containing a single terminal. Right click to open terminal more terminals, and you run apps like `rviz2` or Autware Planning simulations, as you would with a regular Ubuntu VM.
 
 ## Useful Commands
 Assume all these commands are ran in **Host machine**, unless otherwise specified.
@@ -69,3 +69,38 @@ Then you must attach as root:
 `docker exec -u root -it ros2-vehicle-interface bash` before `git commit`-ing
 
 You can verify if this is successful with `ssh -T git@github.com` **in the container**.
+
+
+## UA-Specific Setup
+Here's setup commands to create a minimal ros2 workspace containing [SD-VehicleInterface](https://github.com/Monash-Connected-Autonomous-Vehicle/SD-VehicleInterface), [autoware-dummy-publisher](https://github.com/Monash-Connected-Autonomous-Vehicle/autoware-dummy-publisher/tree/main/py_publishautowaremsgs) and other dependencies. If you're considering runnning Autoware, refer to this [repo](https://github.com/Monash-Connected-Autonomous-Vehicle/grpc-autoware-planning-interface).
+
+```bash
+cd /home/mcav/ros2_ws/src/
+git clone https://github.com/Monash-Connected-Autonomous-Vehicle/SD-VehicleInterface.git
+git clone https://github.com/autowarefoundation/autoware_msgs.git
+git clone https://github.com/Monash-Connected-Autonomous-Vehicle/autoware-dummy-publisher.git
+cd ..
+source /opt/ros/humble/setup.bash
+rosdep update
+rosdep install -y --from-paths src --ignore-src --rosdistro $ROS_DISTRO
+colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
+```
+
+Quick testing  
+Terminal 1/tmux window 1
+```bash
+source install/setup.bash
+ros2 launch sd_vehicle_interface sd_vehicle_interface.launch.xml sd_simulation_mode:=true
+```
+
+Terminal 2/tmux window 2
+```bash
+source install/setup.bash
+ros2 run py_publishautowaremsgs controller
+```
+
+Terminal 3/tmux window 3
+```bash
+source install/setup.bash
+ros2 topic echo <topic-you-are-controlling>
+```
