@@ -1,90 +1,71 @@
 # 🐋 mcav-docker
 
-Contains Dockerfiles and a run script.
+Docker enables running applications across different Operation Systems. At MCAV, it is a lightweight alterative to a full-scale Ubuntu 22 Virtual Machine.
 
-Docker is an alternative if you don't have a Ubuntu 22 VM.
+**The entire README document is useful, so please read it all before starting to work with docker**
 
-1. Install docker CLI: https://www.docker.com/get-started/
-2. In this folder, run
+**Avoid comands to publish data, e.g. `docker push/commit ..`**
+
+
+## Usage
+1. Install docker CLI (once only): https://www.docker.com/get-started/  
+  a. `docker --version` should work in the terminal after installation 
+2. Clone this repository, navigate to the repository root then run `docker build -t ros2-vehicle-interface .` (this command can take ~5 mins to run during the first time, other times are quicker due to caching)
+3. Run the docker image:
 ```bash
-docker build -t ros2-vehicle-interface .
+docker run -d --name ros2-vehicle-interface -e ENABLE_VNC=true \
+  -p 127.0.0.1:5901:5901 -p 127.0.0.1:6080:6080 \
+  ros2-vehicle-interface sleep infinity
 ```
 
-3. Run the docker image with the options of your choice
-Main cmd:
+## Accessing Container
+2 options:
+- Attach (i.e. open terminal connected) to docker via terminal as needed: `docker exec -it ros2-vehicle-interface bash`
+- Or, go to http://localhost:6080/ and use password=`password` to login 
+
+## Useful Commands
+Assume all these commands are ran in **Host machine**, unless otherwise specified.
+- Stop container: `docker stop <container_name>`
+- Start stopped container: `docker start  <container_name>`
+  - You can add `-ai` to attach at the same time
+- Attach to running container: `docker exec -it ros2-vehicle-interface bash`
+- List containers: `docker ps`, use `-a` option to include stopped containers
+- (Inside container) Exit from container: `exit`
+- Attach to an active container: `docker exec -it <container_name> bash`
+- Remove container: `docker rm -f <container_name>`
+- List images: `docker images`
+- [tmux](https://github.com/tmux/tmux/wiki): `tmux`, not a docker comand but a useful tool to manage multiple windows
+
+## `git commit`-ing inside a Docker container
+If you plan to commit code or work with private repos **you do not need to create an SSH key just for docker** (assuming you already have an SSH key on your **host machine** and working in an Unix/Unix-like terminal, i.e. MacOS or Windows WSL).
+
+There are different instructions on how to set this up depending on your operating systems and container applications. In general, all of them require running this before the `docker run` command:  
+On **host machine's** terminal if using `id_ed25519` ssh key:
 ```bash
-docker run -it --name ros2-vehicle-interface-container ros2-vehicle-interface
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/id_ed25519
+ssh-add -l
+ssh -T git@github.com
 ```
-Feel free to change the `--name`
-
-- Note: To run with your ssh keys for github, run:
-    1. `eval "$(ssh-agent -s)"`
-    2. `ssh-add ~/.ssh/<github_ssh_key>`
-    3. ```bash
-        docker run -it \
-          --name ros2-vehicle-interface-container \
-          -v $SSH_AUTH_SOCK:/ssh-agent \
-          -e SSH_AUTH_SOCK=/ssh-agent \
-          -v ~/.ssh/known_hosts:/root/.ssh/known_hosts:ro \
-          ros2-vehicle-interface bash
-        ```
-
-Options:
-- Remove container after running: `--rm`
-- Allow it to access USB device: `--device=<path-tod-device>`
-
-## Basics
-#### Exiting container
+... or, if using `id_rsa`:
 ```bash
-exit
-```
-
-#### Listing containers
-Running containers:
-```bash
-docker ps
-```
-- Use `-a` flag for all containers (running or not)
-
-#### Starting and attaching container
-Start container if it has been stopped (i.e. not in `docker ps`)
-```bash
-docker start <container_id_or_name>     
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/id_rsa
+ssh-add -l
+ssh -T git@github.com
 ```
 
-Attach to container to start working in that environment.
+Then you'll need to modify the `docker run` to perform "SSH-Agent forwarding". You're encouraged to find the correct modification for your system. It should look similar to this (MacOS example with OrbStack):
+
 ```bash
-docker exec -it <container_id_or_name> bash    
+docker run -d --name ros2-vehicle-interface -e ENABLE_VNC=true \
+  -v /run/host-services/ssh-auth.sock:/agent.sock \
+  -e SSH_AUTH_SOCK=/agent.sock \
+  -p 127.0.0.1:5901:5901 -p 127.0.0.1:6080:6080 \
+  ros2-vehicle-interface sleep infinity
 ```
 
-#### Container/Image Removal
-If the container/image is taking too much space, feel free to remove it 
+Then you must attach as root:
+`docker exec -u root -it ros2-vehicle-interface bash` before `git commit`-ing
 
-Container:
-1. find id or name using:
-```bash
-docker ps -a
-```
-2. Remove forcefully with: 
-```bash
-docker rm -f <container_id_or_name>
-```
-
-Image:
-1. find id or name with:
-```bash
-docker images
-```
-2. Remove forcefully with: 
-```bash
-docker rmi -f
-```
-
-#### Editing docker files via VSCode from your host machine
-Don't like vim nor nano? Use VSCode dev: https://marketplace.visualstudio.com/items/?itemName=ms-vscode-remote.remote-containers
-
-#### tmux
-Don't want to open multiple terminals just for docker? Have a look at tmux: https://github.com/tmux/tmux/wiki
-
-#### Rviz2 (experimental)
-https://github.com/adeeb10abbas/ros2-docker-dev/tree/master
+You can verify if this is successful with `ssh -T git@github.com` **in the container**.
