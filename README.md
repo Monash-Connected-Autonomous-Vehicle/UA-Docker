@@ -1,38 +1,54 @@
-# 🐋 mcav-docker
+# UA-Docker
 
 Docker enables running applications across different Operation Systems. At MCAV, it is a lightweight alterative to a full-scale Ubuntu 22 Virtual Machine.
 
-**Please read it the entire README before starting to work with docker**
+**Please read the entire README before starting to work with docker**
 
-**Avoid comands to publish data, e.g. `docker push/commit ..`**
+**Avoid commands that publish data (e.g. `docker push/commit ..`)**
 
+## Structure
+Each directory contains a `Dockerfile` for a unique purpose. View nested READMEs for more info. Tips that apply to any docker container can be found below. All `Dockerfile` provides the option for running a VNC server, which enables us to use GUI apps via a browser.
+
+Modifying the `Dockerfile`? Ensure you rebuild before running the container.
 
 ## Usage
 1. Install docker CLI (once only): https://www.docker.com/get-started/  
-  a. `docker --version` should work in the terminal after installation 
-2. Clone this repository, navigate to the repository root then run `docker build -t ros2-vehicle-interface .` (this command can take ~5 mins to run during the first time, other times are quicker due to caching)
-3. Run the docker image:
-```bash
-docker run -d --name ros2-vehicle-interface -e ENABLE_VNC=true \
-  -p 127.0.0.1:5901:5901 -p 127.0.0.1:6080:6080 \
-  ros2-vehicle-interface sleep infinity
-```
+    a. `docker --version` should work in the terminal after installation 
+2. Clone this repository
+3. Open the terminal at the repository root and navigate to the directory that has the `Dockerfile` your you want (e.g. `cd autoware`, `cd basic_ros2`)
+4. Build the image with `docker build -t <custom-name> .` (e.g. `docker build -t my-ua-image .`)
+5. Run the docker image and use args specified by the nested README (e.g. `docker run <custom-name> ...`)
 
-## Accessing Container
-2 options:
-- Attach (i.e. open terminal connected) to docker via terminal as needed: `docker exec -it ros2-vehicle-interface bash`
-- Or, go to http://localhost:6080/ and use password=`password` to login. This opens an blank background usually containing a single terminal. Right click to open terminal more terminals, and you run apps like `rviz2` or Autware Planning simulations, as you would with a regular Ubuntu VM.
 
 ## Useful Commands
 Assume all these commands are ran in **Host machine**, unless otherwise specified.
+The most useful option `--help` to get info about command (e.g. `docker run --help`)
+
+Format of useful commands:
+```txt
+- main command (e.g. `docker <command>`)
+    - <option> to do something (e.g. `docker <command> <option>`)
+```
+
+Useful commands:
+
+- Run container from image: `docker run -u root <image-name-or-id>`
+    - `-d` to run in background
+    - `-it` to run with a terminal connected to container
+    - `--rm` to remove container immediately after you exit
+    - `--name` to give your new container a name
+    - `-u root` for root privileges
 - Stop container: `docker stop <container_name>`
-- Start stopped container: `docker start  <container_name>`
-  - You can add `-ai` to attach at the same time
-- Attach to running container: `docker exec -it ros2-vehicle-interface bash`
-- List containers: `docker ps`, use `-a` option to include stopped containers
+- Start stopped container: `docker start <container_name>`
+  - `-ai` to attach at the same time
+- Attach to running container: `docker exec -u root -it <container_name> bash`
+- List containers: `docker ps`
+    - `-a` option to include stopped containers
 - (Inside container) Exit from container: `exit`
-- Attach to an active container: `docker exec -it <container_name> bash`
-- Remove container: `docker rm -f <container_name>`
+- Attach to an active container: `docker exec -u root -it <container_name> bash`
+    - `-u root` for root privileges
+- Remove container: `docker rm <container_name>`
+    - `-f` to remove forcefully
 - List images: `docker images`
 - [tmux](https://github.com/tmux/tmux/wiki): `tmux`, not a docker comand but a useful tool to manage multiple windows
 
@@ -58,49 +74,19 @@ ssh -T git@github.com
 Then you'll need to modify the `docker run` to perform "SSH-Agent forwarding". You're encouraged to find the correct modification for your system. It should look similar to this (MacOS example with OrbStack):
 
 ```bash
-docker run -d --name ros2-vehicle-interface -e ENABLE_VNC=true \
+docker run -u root -d --name ros2-vehicle-interface -e ENABLE_VNC=true \
+  -e VNC_PASSWORD="${VNC_PASSWORD:?Set VNC_PASSWORD first}" \
   -v /run/host-services/ssh-auth.sock:/agent.sock \
   -e SSH_AUTH_SOCK=/agent.sock \
-  -p 127.0.0.1:5901:5901 -p 127.0.0.1:6080:6080 \
+  -p 127.0.0.1:6080:6080 \
   ros2-vehicle-interface sleep infinity
 ```
-
-Then you must attach as root:
-`docker exec -u root -it ros2-vehicle-interface bash` before `git commit`-ing
+Then attach:
+`docker exec -u root -it ros2-vehicle-interface bash`
 
 You can verify if this is successful with `ssh -T git@github.com` **in the container**.
 
-
-## UA-Specific Setup
-Here's setup commands to create a minimal ros2 workspace containing [SD-VehicleInterface](https://github.com/Monash-Connected-Autonomous-Vehicle/SD-VehicleInterface), [autoware-dummy-publisher](https://github.com/Monash-Connected-Autonomous-Vehicle/autoware-dummy-publisher/tree/main/py_publishautowaremsgs) and other dependencies. If you're considering runnning Autoware, refer to this [repo](https://github.com/Monash-Connected-Autonomous-Vehicle/grpc-autoware-planning-interface).
-
-```bash
-cd /home/mcav/ros2_ws/src/
-git clone https://github.com/Monash-Connected-Autonomous-Vehicle/SD-VehicleInterface.git
-git clone https://github.com/autowarefoundation/autoware_msgs.git
-git clone https://github.com/Monash-Connected-Autonomous-Vehicle/autoware-dummy-publisher.git
-cd ..
-source /opt/ros/humble/setup.bash
-rosdep update
-rosdep install -y --from-paths src --ignore-src --rosdistro $ROS_DISTRO
-colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
-```
-
-Quick testing  
-Terminal 1/tmux window 1
-```bash
-source install/setup.bash
-ros2 launch sd_vehicle_interface sd_vehicle_interface.launch.xml sd_simulation_mode:=true
-```
-
-Terminal 2/tmux window 2
-```bash
-source install/setup.bash
-ros2 run py_publishautowaremsgs controller
-```
-
-Terminal 3/tmux window 3
-```bash
-source install/setup.bash
-ros2 topic echo <topic-you-are-controlling>
-```
+## Accessing Container
+2 options:
+- Attach (i.e. open terminal connected) to docker via terminal as needed: `docker exec -u root -it <container-name> bash`
+- Or, if you enabled VNC in `docker run`, go to http://localhost:6080/ and login with the `VNC_PASSWORD` you set. This opens a simple desktop. Right click to open more terminals, and run apps like `rviz2` or Autoware planning simulations (if using an Autoware container), as you would with a regular Ubuntu VM.

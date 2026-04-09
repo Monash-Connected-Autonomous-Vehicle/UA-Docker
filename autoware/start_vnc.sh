@@ -2,10 +2,14 @@
 set -e
 
 VNC_HOME="${VNC_HOME:-$HOME}"
+if [ -z "${VNC_PASSWORD:-}" ]; then
+  echo "ERROR: VNC_PASSWORD must be set when ENABLE_VNC=true"
+  exit 1
+fi
+
 mkdir -p "${VNC_HOME}/.vnc"
 if [ ! -f "${VNC_HOME}/.vnc/passwd" ]; then
-  # Default password "password" for dev; override by mounting your own passwd file if needed
-  echo "password" | vncpasswd -f > "${VNC_HOME}/.vnc/passwd"
+  echo "${VNC_PASSWORD}" | vncpasswd -f > "${VNC_HOME}/.vnc/passwd"
   chmod 600 "${VNC_HOME}/.vnc/passwd"
 fi
 
@@ -59,4 +63,3 @@ vncserver :1 -geometry "${VNC_RESOLUTION}" -depth 24
 
 # noVNC proxy (web UI on 6080 by default)
 /usr/lib/novnc/utils/novnc_proxy --vnc localhost:5901 --listen 6080
-
