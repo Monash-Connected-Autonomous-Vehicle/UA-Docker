@@ -33,7 +33,7 @@ Format of useful commands:
 Useful commands:
 
 - Run container from image: `docker run -u root <image-name-or-id>`
-    - `-d` to run in background
+    - `-d` to run in the background
     - `-it` to run with a terminal connected to container
     - `--rm` to remove container immediately after you exit
     - `--name` to give your new container a name
@@ -50,6 +50,7 @@ Useful commands:
 - Remove container: `docker rm <container_name>`
     - `-f` to remove forcefully
 - List images: `docker images`
+- Remove dangling images: `docker image prune`
 - [tmux](https://github.com/tmux/tmux/wiki): `tmux`, not a docker comand but a useful tool to manage multiple windows
 
 ## `git commit`-ing inside a Docker container

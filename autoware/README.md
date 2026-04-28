@@ -2,7 +2,7 @@
 Refer to main README for proper guide to Docker. Contains ROS2 as well.
 
 ## Simple setup
-Build Docker Image:
+Build Docker Image (first-time only or after updating docker image)
 ```bash
 docker build -t ua-autoware-devel .
 ```
@@ -15,7 +15,7 @@ docker run -u root -it --net=host ua-autoware-devel
 
 - With display on http://localhost:6080/ :
 ```bash
-docker run -u root -it \
+docker run -d -u root -it \
   -p 127.0.0.1:6080:6080 \
   -e ENABLE_VNC=true \
   -e VNC_PASSWORD="${VNC_PASSWORD:?Set VNC_PASSWORD first}" \
@@ -37,14 +37,14 @@ docker run -u root -it \
 - `VNC_PASSWORD`: Required when `ENABLE_VNC=true`; used to protect VNC access.
 
 ### Launching Planning Sim
-A common test is to run the planning simulator:
+A common test is to run the planning simulator (as non-root user):
 ```bash
 source /opt/autoware/setup.bash
 
-export DISPLAY=:1.0
+export DISPLAY=:1
 
 ros2 launch autoware_launch planning_simulator.launch.xml \
-map_path:="/root/autoware_map/Monash_Clayton_campus_simulation_only" \
+map_path:=/home/mcav/autoware_map/Monash_Clayton_campus_simulation_only \
 vehicle_model:=sample_vehicle \
 sensor_model:=sample_sensor_kit \
 rviz:="$ENABLE_VNC"
