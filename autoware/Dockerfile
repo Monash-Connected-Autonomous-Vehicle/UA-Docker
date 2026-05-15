@@ -29,6 +29,7 @@ RUN apt-get update && \
     tzdata \
     websockify \
     python3-pip \
+    can-utils \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean \
     && pip3 install --no-cache-dir --upgrade \
@@ -73,7 +74,44 @@ ENV CMAKE_PREFIX_PATH="/opt/acados:${CMAKE_PREFIX_PATH}"
 ENV ACADOS_SOURCE_DIR=/opt/acados
 ENV LD_LIBRARY_PATH="/opt/acados/lib:${LD_LIBRARY_PATH}"
 
+# Layer: clone + vcs import
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    python3-vcstool \
+    python3-rosdep \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /home/${USERNAME}
+RUN git clone https://github.com/Monash-Connected-Autonomous-Vehicle/autoware.twizy.git -b feat/accommodate-for-docker
+
+WORKDIR /home/${USERNAME}/autoware.twizy
+
+# Import workspace dependencies
+RUN /bin/bash -c "set -e && \
+    mkdir -p src && \
+    vcs import src < repositories/docker-no-nvidia-dep.autoware.repos"
+
+# rosdep layer
+RUN /bin/bash -c "set -e && \
+    source /opt/autoware/setup.bash && \
+    apt-get update && \
+    rosdep update && \
+    rosdep install -y \
+        --from-paths src \
+        --ignore-src \
+        --rosdistro \$ROS_DISTRO && \
+    rm -rf /var/lib/apt/lists/*"
+
+# build layer
+RUN /bin/bash -c "set -e && \
+    source /opt/autoware/setup.bash && \
+    colcon build --symlink-install \
+        --cmake-args -DCMAKE_BUILD_TYPE=Release"
+
+RUN chown -R "${USERNAME}:${USERNAME}" "/home/${USERNAME}/autoware.twizy"
+
 USER ${USERNAME}
+WORKDIR /home/${USERNAME}/autoware.twizy
 
 ENTRYPOINT ["/entrypoint.sh"]
 CMD []
