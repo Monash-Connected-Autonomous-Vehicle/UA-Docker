@@ -108,6 +108,10 @@ RUN /bin/bash -c "set -e && \
     colcon build --symlink-install \
         --cmake-args -DCMAKE_BUILD_TYPE=Release"
 
+RUN /bin/bash -c "set -e && \
+    source /opt/autoware/setup.bash && \
+    ./setup-dev-env.sh --no-nvidia --no-cuda-drivers -y"
+
 RUN chown -R "${USERNAME}:${USERNAME}" "/home/${USERNAME}/autoware.twizy"
 
 USER ${USERNAME}
