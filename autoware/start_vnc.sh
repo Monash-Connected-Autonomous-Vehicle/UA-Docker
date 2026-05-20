@@ -58,8 +58,22 @@ EOF
   chmod +x "${VNC_HOME}/.vnc/xstartup"
 fi
 
-export DISPLAY=${DISPLAY:-:1}
-vncserver :1 -geometry "${VNC_RESOLUTION}" -depth 24
+VNC_DISPLAY="${VNC_DISPLAY:-:1}"
+if ! [[ "${VNC_DISPLAY}" =~ ^:[0-9]{1,3}$ ]]; then
+  echo "ERROR: VNC_DISPLAY must be of the form :N (e.g. :1, :10). Got: ${VNC_DISPLAY}"
+  exit 1
+fi
 
-# noVNC proxy (web UI on 6080 by default)
-/usr/lib/novnc/utils/novnc_proxy --vnc localhost:5901 --listen 6080
+NOVNC_PORT="${NOVNC_PORT:-6080}"
+if ! [[ "${NOVNC_PORT}" =~ ^[0-9]+$ ]] || (( NOVNC_PORT < 1 || NOVNC_PORT > 65535 )); then
+  echo "ERROR: NOVNC_PORT must be an integer in 1-65535. Got: ${NOVNC_PORT}"
+  exit 1
+fi
+
+# 10# forces base-10 so values like ":08" don't get parsed as (invalid) octal.
+VNC_PORT=$((5900 + 10#${VNC_DISPLAY#:}))
+
+export DISPLAY="${VNC_DISPLAY}"
+vncserver "${VNC_DISPLAY}" -geometry "${VNC_RESOLUTION}" -depth 24
+
+/usr/lib/novnc/utils/novnc_proxy --vnc "localhost:${VNC_PORT}" --listen "${NOVNC_PORT}"
