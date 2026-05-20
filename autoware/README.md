@@ -41,19 +41,24 @@ sudo docker run -u root -it \
   --cap-add NET_RAW \
   -e ENABLE_VNC=true \
   -e VNC_PASSWORD="${VNC_PASSWORD:?Set VNC_PASSWORD first}" \
+  -e VNC_DISPLAY=:42 \
   -e NOVNC_PORT=16080 \
   ua-autoware-devel
 ```
 
 Open the noVNC web UI at `http://localhost:16080/`.
 
-**NOTE**: `-p` port-mapping flags are silently ignored by Docker when `--network host` is used — the container shares the host's network stack directly, so `vncserver` and `novnc_proxy` bind to host ports themselves. `NOVNC_PORT=16080` is used here instead of the default `6080` because `6080` is commonly taken by other dev tooling. If port `5901` (VNC display `:1`) is also taken on your host, override `VNC_DISPLAY` (e.g. `-e VNC_DISPLAY=:10` to use port 5910) and remember to use the matching `export DISPLAY=:10` inside the container.
+**NOTE**: `-p` port-mapping flags are silently ignored by Docker when `--network host` is used — the container shares the host's network stack directly, so `vncserver` and `novnc_proxy` bind to host ports themselves. We override two ports to avoid the most common host-side collisions:
+- `VNC_DISPLAY=:42` puts the VNC server on TCP port 5942 instead of the default 5901, which is often taken by host-side VNC tooling.
+- `NOVNC_PORT=16080` puts the web UI on 16080 instead of the default 6080, which is commonly taken by other dev tooling.
+
+Adjust both values freely if those ports are also in use on your host. The demo commands below pick up `VNC_DISPLAY` automatically, so they work for either networking mode without further edits.
 
 ### Main Dockerfile Arguments
 - `ENABLE_VNC`: Whether to activate VNC for connecting to display, defaults to `false`.
 - `VNC_PASSWORD`: Required when `ENABLE_VNC=true`; used to protect VNC access.
-- `VNC_DISPLAY`: X display to use for the VNC server, defaults to `:1` (port 5901). Override when port 5901 is already in use on the host (only relevant under `--network host`). Must match the form `:N` where N is a non-negative integer.
-- `NOVNC_PORT`: Port the noVNC web proxy listens on, defaults to `6080`. Override when port 6080 is already in use on the host (only relevant under `--network host`).
+- `VNC_DISPLAY`: X display to use for the VNC server, defaults to `:1` (port 5901). Override under `--network host` if port 5901 is already in use on the host. Must match the form `:N` where N is a non-negative integer.
+- `NOVNC_PORT`: Port the noVNC web proxy listens on, defaults to `6080`. Override under `--network host` if port 6080 is already in use on the host.
 
 ## Demonstrations
 ### Launching Planning Simulator without vehicle control
@@ -61,7 +66,7 @@ A common test is to run the planning simulator (as non-root user). Navigate to `
 ```bash
 source install/setup.bash
 
-export DISPLAY=:1
+export DISPLAY="${VNC_DISPLAY:-:1}"
 
 ros2 launch autoware_launch planning_simulator.launch.xml \
 map_path:=/home/mcav/autoware_map/Monash_Clayton_campus_simulation_only \
@@ -73,7 +78,7 @@ Ensure CAN connection is setup and working (see Notion). Then, navigate to `auto
 ```bash
 source install/setup.bash
 
-export DISPLAY=:1
+export DISPLAY="${VNC_DISPLAY:-:1}"
 
 ros2 launch autoware_launch planning_simulator.launch.xml \
 vehicle_simulation:=false \
