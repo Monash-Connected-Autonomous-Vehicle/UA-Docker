@@ -30,6 +30,10 @@ RUN apt-get update && \
     websockify \
     python3-pip \
     can-utils \
+    usbutils \
+    iputils-ping \
+    ros-humble-velodyne \
+    ros-humble-ros2-socketcan \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean \
     && pip3 install --no-cache-dir --upgrade \

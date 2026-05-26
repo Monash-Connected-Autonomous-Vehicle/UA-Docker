@@ -10,7 +10,7 @@ docker build -t ua-ros2 .
 Run container:
 - Headless: 
 ```bash
-docker run -u root -it --net=host ua-ros2
+docker run -u root -it ua-ros2
 ```
 
 - With display on http://localhost:6080/ :

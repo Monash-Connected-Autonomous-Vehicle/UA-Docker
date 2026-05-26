@@ -11,7 +11,7 @@ docker build -t ua-autoware-devel .
 ### For software-only testing
 Headless:
 ```bash
-docker run -u root -it --net=host ua-autoware-devel
+docker run -u root -it ua-autoware-devel
 ```
 
 With display on http://localhost:6080/:
@@ -33,18 +33,20 @@ docker run -u root -it \
   ua-autoware-devel
 ```
 ### For software testing and vehicle control
-If you intend to control the vehicle via CANbus and/or receive Velodyne LiDAR data:
+You'll need to run the docker container on an Ubuntu VM with usb access to the PCAN-USB adapter.
 
 ```bash
 sudo docker run -u root -it \
   --network host \
-  --cap-add NET_RAW \
+  --cap-add=NET_ADMIN \
   -e ENABLE_VNC=true \
   -e VNC_PASSWORD="${VNC_PASSWORD:?Set VNC_PASSWORD first}" \
   -e VNC_DISPLAY=:42 \
   -e NOVNC_PORT=16080 \
   ua-autoware-devel
 ```
+
+Then, inside the docker container, run: `sudo apt install -y linux-modules-extra-$(uname -r)`
 
 Open the noVNC web UI at `http://localhost:16080/`.
 
@@ -62,7 +64,7 @@ Adjust both values freely if those ports are also in use on your host. The demo 
 
 ## Demonstrations
 ### Launching Planning Simulator without vehicle control
-A common test is to run the planning simulator (as non-root user). Navigate to `autoware.twizy` and run:
+A common test is to run the planning simulator. Navigate to `autoware.twizy` and run:
 ```bash
 source install/setup.bash
 
