@@ -38,7 +38,7 @@ You'll need to run the docker container on an Ubuntu VM with usb access to the P
 ```bash
 sudo docker run -u root -it \
   --network host \
-  --cap-add=NET_ADMIN \
+  --cap-add NET_ADMIN \
   -e ENABLE_VNC=true \
   -e VNC_PASSWORD="${VNC_PASSWORD:?Set VNC_PASSWORD first}" \
   -e VNC_DISPLAY=:42 \
