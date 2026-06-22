@@ -3,8 +3,6 @@ FROM ghcr.io/autowarefoundation/autoware:universe-devel@sha256:d8e97a86bc628b686
 ARG USERNAME=mcav
 ARG USER_UID=1000
 ARG USER_GID=${USER_UID}
-ARG YQ_VERSION=v4.44.3
-ARG YQ_SHA256=a2c097180dd884a8d50c956ee16a9cec070f30a7947cf4ebf87d5f36213e9ed7
 
 RUN apt-get update && \
     apt-get -y upgrade && \
@@ -35,14 +33,7 @@ RUN apt-get update && \
     ros-humble-velodyne \
     ros-humble-ros2-socketcan \
     && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean \
-    && pip3 install --no-cache-dir --upgrade \
-    "cryptography>=44.0.0,<47.0.0"
-
-RUN wget -qO /usr/local/bin/yq \
-    "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64" && \
-    echo "${YQ_SHA256}  /usr/local/bin/yq" | sha256sum -c - && \
-    chmod +x /usr/local/bin/yq
+    && apt-get clean
 
 ENV NOVNC_COMMIT=09440da5c1deccf579020292cfeeb8f7dc23f65b
 
@@ -111,6 +102,11 @@ RUN /bin/bash -c "set -e && \
     source /opt/autoware/setup.bash && \
     colcon build --symlink-install \
         --cmake-args -DCMAKE_BUILD_TYPE=Release"
+
+RUN pipx install \
+      --include-deps \
+      --pip-args="--no-binary cryptography" \
+      "ansible==10.*"
 
 RUN /bin/bash -c "set -e && \
     source /opt/autoware/setup.bash && \
