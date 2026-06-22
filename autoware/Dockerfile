@@ -50,11 +50,6 @@ RUN groupadd --gid "${USER_GID}" "${USERNAME}" && \
     mkdir -p "/home/${USERNAME}/.vnc" "/home/${USERNAME}/autoware_map" && \
     chown -R "${USERNAME}:${USERNAME}" "/home/${USERNAME}"
 
-# Entry point updates these parameter files at startup.
-RUN chown "${USERNAME}:${USERNAME}" \
-    /opt/autoware/share/autoware_launch/config/planning/scenario_planning/common/common.param.yaml \
-    /opt/autoware/share/sample_vehicle_description/config/vehicle_info.param.yaml
-
 COPY entrypoint.sh /entrypoint.sh
 COPY start_vnc.sh /start_vnc.sh
 RUN chmod +x /entrypoint.sh /start_vnc.sh && \
