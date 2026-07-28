@@ -82,6 +82,8 @@ RUN chmod +x /start_vnc.sh /entrypoint.sh \
     && chown $USERNAME:$USERNAME /start_vnc.sh /entrypoint.sh
 USER $USERNAME
 
+WORKDIR /home/${USERNAME}
+
 # Start interactive shell
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["/bin/bash"]
